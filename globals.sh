@@ -11,8 +11,8 @@ ACCELERATORCOUNT="1"
 # Cpu and memory settings
 #INSTANCETYPE="n1-standard-8"	#Uncomment if defined GCP machine type is to be used instead of custom specification
 MINCPUPLATFORM="Intel Skylake"	# Minimum cpu platform to use. Choose from: AUTOMATIC, Intel Skylake, Intel Sandy Bridge, Intel Ivy Bridge, Intel Haswell, Intel Broadwell
-CPUCOUNT = "4"					# vCPU count
-MEMORYSIZE = "12GB"				# Ram size. Increment of 1024mb or 1gb
+CPUCOUNT="6"					# vCPU count
+MEMORYSIZE="12GB"				# Ram size. Increment of 1024mb or 1gb
 
 # Disk settings
 BOOTTYPE="pd-ssd"		#Type of storage for boot disk. pd-ssd or pd-standard
@@ -419,7 +419,7 @@ function gcloudrig_create_instance_template {
   if [ -z "$INSTANCETTYPE" ]; then
     machineFlag="--machine-type $INSTANCETYPE"
   else
-    machineFlag="--custom-cpu $CPUCOUNT --custom-memory $MEMORYSIZE : --custom-extensions --custom-vm-type=n1"
+    machineFlag="--custom-cpu "$CPUCOUNT" --custom-memory "$MEMORYSIZE" : --custom-extensions --custom-vm-type=n1"
   fi
 
 
