@@ -7,7 +7,7 @@ $GamesDiskName="gcloudrig-games"
 $SetupScriptUrlAttribute="gcloudrig-setup-script-gcs-url"
 
 # Disk Size and type
-$DISKSIZE="256GB"
+$DISKSIZE="256"
 $DISKTYPE="pd-ssd"
 
 # Logs to GCP Serial Console
