@@ -434,7 +434,7 @@ function gcloudrig_create_instance_template {
       --boot-disk-type "$BOOTTYPE" \
       $imageFlags \
 	  $machineFlag \
-	  --min-cpu-platform "$MINCPUPLATFORM"
+	  --min-cpu-platform "$MINCPUPLATFORM" \
       --labels "$GCRLABEL=true" \
       --maintenance-policy "TERMINATE" \
       --scopes "default,compute-rw" \
