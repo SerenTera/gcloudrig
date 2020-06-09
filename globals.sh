@@ -417,9 +417,9 @@ function gcloudrig_create_instance_template {
   fi
 
   if [ -z "$INSTANCETTYPE" ]; then
-    machineFlag="--machine-type $INSTANCETYPE"
-  else
     machineFlag="--custom-cpu "$CPUCOUNT" --custom-memory "$MEMORYSIZE" : --custom-extensions --custom-vm-type=n1"
+  else
+    machineFlag="--machine-type $INSTANCETYPE"
   fi
 
 
