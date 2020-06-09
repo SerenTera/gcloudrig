@@ -12,6 +12,7 @@ DIR="$( cd "$( dirname -- "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 source "$DIR/globals.sh"
 init_setup # init_gcloudrig;
 
+
 # create/recreate instance group; uses the startup template by default
 gcloudrig_delete_instance_group
 gcloudrig_create_instance_group
