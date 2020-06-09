@@ -1,20 +1,31 @@
 #!/usr/bin/env bash
 
+############
+# Settings #
+############
+
 # what gpu and how many? see https://cloud.google.com/compute/docs/gpus
 ACCELERATORTYPE="nvidia-tesla-p4-vws"
 ACCELERATORCOUNT="1"
 
-# instance and boot disk type?
-INSTANCETYPE="n1-standard-8"
-BOOTTYPE="pd-ssd"
+# Cpu and memory settings
+#INSTANCETYPE="n1-standard-8"	#Uncomment if defined GCP machine type is to be used instead of custom specification
+MINCPUPLATFORM="Intel Skylake"	# Minimum cpu platform to use. Choose from: AUTOMATIC, Intel Skylake, Intel Sandy Bridge, Intel Ivy Bridge, Intel Haswell, Intel Broadwell
+CPUCOUNT = "4"					# vCPU count
+MEMORYSIZE = "12GB"				# Ram size. Increment of 1024mb or 1gb
+
+# Disk settings
+BOOTTYPE="pd-ssd"		#Type of storage for boot disk. pd-ssd or pd-standard
+STORAGETYPE="pd-ssd"	#Type of storage for main storage disk. pd-ssd or pd-standard. ssd costs more to run per hour.
+STORAGESIZE="256GB"		#Size of storage for main storage disk. The higher the allocation the higher the cost per hour.
 
 # base image?
 IMAGEBASEFAMILY="windows-2019"
 IMAGEBASEPROJECT="windows-cloud"
 
 # various resource and label names
-GCRLABEL="gcloudrig" # also set in gcloudrig-startup.ps1
-GAMESDISK="gcloudrig-games" # also set in gcloudrig-startup.ps1
+GCRLABEL="gcloudrig"
+GAMESDISK="gcloudrig-storage"
 IMAGEFAMILY="gcloudrig"
 INSTANCEGROUP="gcloudrig-group"
 INSTANCENAME="gcloudrig"
@@ -27,15 +38,6 @@ REGION=""
 PROJECT_ID=""
 ZONES=""
 GCSBUCKET=""
-
-
-declare -A SETUPOPTIONS
-SETUPOPTIONS[ZeroTierNetwork]=""
-SETUPOPTIONS[VideoMode]="1920x1080"
-SETUPOPTIONS[DisplayScaling]=""
-SETUPOPTIONS[InstallSteam]="false"
-SETUPOPTIONS[InstallBattlenet]="false"
-SETUPOPTIONS[InstallSSH]="false"
 
 ########
 # INIT #
@@ -85,9 +87,6 @@ function init_setup {
   # but if they do it must be manually increased
   gcloudrig_check_quota_gpus_all_regions
 
-  # create a GCS bucket to store Powershell module
-  gcloudrig_create_gcs_bucket
-
   # now set the zones
   init_common;
 }
@@ -96,7 +95,6 @@ function init_common {
   GCSBUCKET="gs://$PROJECT_ID"
   local groupsize=0
 
-  gcloudrig_update_powershell_module 
 
   # get a comma separated list of zones with accelerators in the current region
   ZONES="$(gcloudrig_get_accelerator_zones "$REGION")"
@@ -418,13 +416,21 @@ function gcloudrig_create_instance_template {
     imageFlags="--image $(gcloudrig_get_bootimage)"
   fi
 
+  if [ -z "$INSTANCETTYPE" ]; then
+    machineFlag="--machine-type $INSTANCETYPE"
+  else
+    machineFlag="--custom-cpu $CPUCOUNT --custom-memory $MEMORYSIZE : --custom-extensions --custom-vm-type=n1"
+  fi
+
+
   echo "Creating instance template '$templateName'..."
   gcloud compute instance-templates create "$templateName" \
       --accelerator "type=$ACCELERATORTYPE,count=$ACCELERATORCOUNT" \
       --boot-disk-type "$BOOTTYPE" \
       $imageFlags \
+	  $machineFlag \
       --labels "$GCRLABEL=true" \
-      --machine-type "$INSTANCETYPE" \
+	  --min-cpu-platform "$MINCPUPLATFORM" \
       --maintenance-policy "TERMINATE" \
       --scopes "default,compute-rw" \
       --no-boot-disk-auto-delete \
@@ -432,7 +438,6 @@ function gcloudrig_create_instance_template {
       --format "value(name)" \
       --preemptible \
       --metadata serial-port-logging-enable=true \
-      --metadata-from-file windows-startup-script-ps1=<(cat "$DIR/gcloudrig-boot.ps1") \
       --quiet || echo
 }
 
@@ -596,35 +601,6 @@ function gcloudrig_get_password_from_logs {
   gcloud logging read "logName=projects/$PROJECT_ID/logs/gcloudrig-install AND textPayload:password" --format="value(textPayload)" --limit=1
 }
 
-# create GCS bucket, don't fail if it already exists
-function gcloudrig_create_gcs_bucket {
-  local err result
-  GCSBUCKET="${GCSBUCKET:-gs://$PROJECT_ID}"
-
-  set +e
-  result="$(gsutil -q mb -p "$PROJECT_ID" -c regional \
-    -l "$REGION" "$GCSBUCKET/" 2>&1)"
-  err="$?"
-  if [ "$err" -gt 0 ] ; then
-    # catch errors, ignore "already exists"
-    if ! echo "$result" | grep -q "already exists" ; then
-      echo "$result" >&2
-      return "$err"
-    fi
-  fi
-  set -e
-
-  # announce script's gcs url via project metadata
-  gcloud compute project-info add-metadata --metadata "gcloudrig-setup-script-gcs-url=$GCSBUCKET/gcloudrig.psm1" --quiet
-}
-
-function gcloudrig_update_powershell_module {
-  # TODO only update if newer
-  local quiet=""
-  [ -n "$GCLOUDRIG_DEBUG" ] && quiet="-q"
-  gsutil $quiet cp "$DIR/gcloudrig.psm1" "$GCSBUCKET/"
-}
-
 function wait_until_instance_group_is_stable {
   set +e
   timeout 300s gcloud compute instance-groups managed wait-until --stable "$INSTANCEGROUP" \
@@ -682,7 +658,9 @@ function gcloudrig_start {
   ZONE="$(gcloudrig_get_instance_zone_from_group "$INSTANCEGROUP")"
   BOOTDISK="$(gcloudrig_get_bootdisk_from_instance "$ZONE" "$INSTANCE")"
 
-  echo "To watch boot/setup progress, visit https://console.cloud.google.com/logs/viewer?project=$PROJECT_ID&advancedFilter=logName:%22projects%2F$PROJECT_ID%2Flogs%22"
+  gcloudrig_mount_games_disk
+
+  echo "VM instance started."
 }
 
 # scale to 0 and wait
@@ -830,6 +808,8 @@ function gcloudrig_mount_games_disk {
     gcloud compute disks create "$GAMESDISK" \
       --zone "$ZONE" \
       --quiet \
+	  --type "$STORAGETYPE"
+	  --size "$STORAGESIZE"
       --labels "$GCRLABEL=true"
 
   # or restore it from the latest snapshot
@@ -837,6 +817,8 @@ function gcloudrig_mount_games_disk {
     gcloud compute disks create "$GAMESDISK" \
       --zone "$ZONE" \
       --source-snapshot "$snapshot" \
+	  --type "$STORAGETYPE"
+	  --size "$STORAGESIZE"
       --quiet \
       --labels "$GCRLABEL=true"
   fi
@@ -847,4 +829,6 @@ function gcloudrig_mount_games_disk {
     --disk "$GAMESDISK" \
     --zone "$ZONE" \
     --quiet &>/dev/null
+
+  echo "Disk Mounted."
 }
