@@ -701,7 +701,7 @@ function gcloudrig_stop {
   echo "Stopping gcloudrig..."
 
   #In case cloud shell is closed previously, we query the BOOTDISK name again
-  if [-z "$BOOTDISK"]; then
+  if [ -z "$BOOTDISK" ]; then
 	INSTANCE="$(gcloudrig_get_instance_from_group "$INSTANCEGROUP")"
     ZONE="$(gcloudrig_get_instance_zone_from_group "$INSTANCEGROUP")"
 	BOOTDISK="$(gcloudrig_get_bootdisk_from_instance "$ZONE" "$INSTANCE")"
