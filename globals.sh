@@ -667,11 +667,11 @@ function gcloudrig_start {
 		--quiet &>/dev/null
   else
 	gcloud compute instance-groups managed resize "$INSTANCEGROUP" \
-	--size "1" \
-	--format "value(currentActions)" \
-	--region "$REGION" \
-	--zone "$FORCEZONE" \
-	--quiet &>/dev/null
+		--size "1" \
+		--format "value(currentActions)" \
+		--region "$REGION" \
+		--zone "$FORCEZONE" \
+		--quiet &>/dev/null
   fi
   
   # if it doesn't start in 5 minutes
