@@ -17,9 +17,9 @@ echo
 echo "Current region: $REGION"
 gcloudrig_select_region
 
-if [ "$REGION" != "$OLD_REGION" ] ; then
-  init_common
 
-  gcloudrig_delete_instance_group
-  gcloudrig_create_instance_group
-fi
+init_common
+
+gcloudrig_delete_instance_group
+gcloudrig_create_instance_group
+

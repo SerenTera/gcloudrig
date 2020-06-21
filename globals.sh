@@ -30,7 +30,7 @@ REGION=""
 PROJECT_ID=""
 ZONES=""
 GCSBUCKET=""
-
+FORCEZONE="asia-southeast1-b"
 
 declare -A SETUPOPTIONS
 SETUPOPTIONS[ZeroTierNetwork]=""
@@ -461,13 +461,19 @@ function gcloudrig_create_instance_group {
 
   gcloudrig_create_instance_template "$templateName"
 
+  if [ -z "$FORCEZONE" ] ; then
+	createzone = "--zones "$ZONES"" 
+  else
+	createzone = "--zones "$FORCEZONE"" 
+  fi
+  
   echo "Creating managed instance group '$INSTANCEGROUP'..."
   gcloud compute instance-groups managed create "$INSTANCEGROUP" \
     --base-instance-name "$INSTANCENAME" \
     --region "$REGION" \
     --size "0" \
     --template "$templateName" \
-    --zones "$ZONES" \
+    $createzone \
     --format "value(name)" \
     --quiet
 }
@@ -662,7 +668,6 @@ function gcloudrig_start {
     --size "1" \
     --format "value(currentActions)" \
     --region "$REGION" \
-    --zone "asia-southeast1-b" \
     --quiet &>/dev/null
 
   # if it doesn't start in 5 minutes
