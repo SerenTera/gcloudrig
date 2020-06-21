@@ -30,7 +30,7 @@ REGION=""
 PROJECT_ID=""
 ZONES=""
 GCSBUCKET=""
-
+FORCEZONE="asia-southeast1-b"
 
 declare -A SETUPOPTIONS
 SETUPOPTIONS[ZeroTierNetwork]=""
@@ -658,12 +658,22 @@ function gcloudrig_start {
   echo "Starting gcloudrig..."
 
   # scale to 1
-  gcloud compute instance-groups managed resize "$INSTANCEGROUP" \
-    --size "1" \
-    --format "value(currentActions)" \
-    --region "$REGION" \
-    --quiet &>/dev/null
-
+  
+  if [ -z "$FORCEZONE" ]; then
+	gcloud compute instance-groups managed resize "$INSTANCEGROUP" \
+		--size "1" \
+		--format "value(currentActions)" \
+		--region "$REGION" \
+		--zone "$FORCEZONE" \
+		--quiet &>/dev/null
+  else
+	gcloud compute instance-groups managed resize "$INSTANCEGROUP" \
+	--size "1" \
+	--format "value(currentActions)" \
+	--region "$REGION" \
+	--quiet &>/dev/null
+  fi
+  
   # if it doesn't start in 5 minutes
   while ! wait_until_instance_group_is_stable; do
 
