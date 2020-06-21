@@ -450,6 +450,7 @@ function gcloudrig_create_instance_template {
 # creates regional managed instance group and gives it the base instance template
 function gcloudrig_create_instance_group {
   local templateName
+  local createzone
   local bootImage="$(gcloudrig_get_bootimage)"
 
   # if we don't have a custom boot image, assume we're in setup
