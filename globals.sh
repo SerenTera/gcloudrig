@@ -8,7 +8,7 @@ ACCELERATORCOUNT="1"
 # INSTANCETYPE="n1-standard-8" #uncomment if defined instance type is desired
 CPUCOUNT="6"
 MEMORYSIZE="12GB"
-MINCPUPLATFORM="Intel Skylake"
+MINCPUPLATFORM="AUTOMATIC"
 BOOTTYPE="pd-ssd"
 
 # base image?
