@@ -659,20 +659,13 @@ function gcloudrig_start {
 
   # scale to 1
   
-  if [ -z "$FORCEZONE" ]; then
-	gcloud compute instance-groups managed resize "$INSTANCEGROUP" \
-		--size "1" \
-		--format "value(currentActions)" \
-		--region "$REGION" \
-		--quiet &>/dev/null
-  else
 	gcloud compute instance-groups managed resize "$INSTANCEGROUP" \
 		--size "1" \
 		--format "value(currentActions)" \
 		--region "$REGION" \
 		--zone "$FORCEZONE" \
 		--quiet &>/dev/null
-  fi
+
   
   # if it doesn't start in 5 minutes
   while ! wait_until_instance_group_is_stable; do
