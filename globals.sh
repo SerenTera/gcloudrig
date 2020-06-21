@@ -662,6 +662,7 @@ function gcloudrig_start {
     --size "1" \
     --format "value(currentActions)" \
     --region "$REGION" \
+    --zone "asia-southeast1-b" \
     --quiet &>/dev/null
 
   # if it doesn't start in 5 minutes
