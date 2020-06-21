@@ -8,7 +8,7 @@ ACCELERATORCOUNT="1"
 # INSTANCETYPE="n1-standard-8" #uncomment if defined instance type is desired
 CPUCOUNT="6"
 MEMORYSIZE="12GB"
-MINCPUPLATFORM="AUTOMATIC"
+MINCPUPLATFORM="Intel Skylake"
 BOOTTYPE="pd-ssd"
 
 # base image?
@@ -30,7 +30,7 @@ REGION=""
 PROJECT_ID=""
 ZONES=""
 GCSBUCKET=""
-FORCEZONE="asia-southeast1-b"
+
 
 declare -A SETUPOPTIONS
 SETUPOPTIONS[ZeroTierNetwork]=""
@@ -658,14 +658,12 @@ function gcloudrig_start {
   echo "Starting gcloudrig..."
 
   # scale to 1
-  
   gcloud compute instance-groups managed resize "$INSTANCEGROUP" \
-	--size "1" \
-	--format "value(currentActions)" \
-	--region "$REGION" \
-	--quiet &>/dev/null
+    --size "1" \
+    --format "value(currentActions)" \
+    --region "$REGION" \
+    --quiet &>/dev/null
 
-  
   # if it doesn't start in 5 minutes
   while ! wait_until_instance_group_is_stable; do
 
