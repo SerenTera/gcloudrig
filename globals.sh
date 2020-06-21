@@ -462,19 +462,13 @@ function gcloudrig_create_instance_group {
 
   gcloudrig_create_instance_template "$templateName"
 
-  if [ -z "$FORCEZONE" ] ; then
-	createzone = "--zones "$ZONES"" 
-  else
-	createzone = "--zones "$FORCEZONE"" 
-  fi
-  
   echo "Creating managed instance group '$INSTANCEGROUP'..."
   gcloud compute instance-groups managed create "$INSTANCEGROUP" \
     --base-instance-name "$INSTANCENAME" \
     --region "$REGION" \
     --size "0" \
     --template "$templateName" \
-    $createzone \
+    --zones "$FORCEZONE" \
     --format "value(name)" \
     --quiet
 }
